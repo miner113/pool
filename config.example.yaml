@@ -1,0 +1,30 @@
+# Example configuration for stratumd (mainnet).
+# Copy to config.yaml and update values before running.
+
+stratum_listen: ":4444"
+tls_cert_path: "/path/to/cert.pem"       # Leave empty to disable TLS
+tls_key_path: "/path/to/key.pem"
+node_rpc_url: "http://rpcuser:rpcpassword@127.0.0.1:8232"
+metrics_listen: ":9100"                   # Prometheus scrape endpoint; leave empty to disable
+nats_url: "nats://127.0.0.1:4222"
+postgres_dsn: "postgres://user:password@127.0.0.1:5432/juno_pool?sslmode=disable"
+clickhouse_dsn: ""                        # Optional, enable for high-rate share logging
+
+# Pool economics
+pool_fee_bps: 100                         # 1% (100 basis points)
+pool_fee_address: "YOUR_POOL_FEE_ADDRESS" # Transparent or UA address for pool fees
+donation_default: false
+
+# Difficulty settings
+vardiff_target_ms: 800                    # Target share submission time (ms)
+vardiff_retarget_secs: 30                 # How often to adjust difficulty
+default_difficulty: 10000                 # Starting difficulty for new miners
+
+# Rewards
+pps_reward_per_diff: 0.0                  # Coins per difficulty unit (PPS placeholder, 0 = PPLNS)
+
+# Payouts
+block_confirmations: 10                   # Confirmations before crediting block reward
+payout_threshold: 0.001                   # Minimum balance for payout (in JUNO)
+payout_batch_cron: "0 * * * *"            # Payout schedule (every hour)
+payout_from_address: "YOUR_POOL_ORCHARD_ADDRESS"  # Shielded address holding pool funds

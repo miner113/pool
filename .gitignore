@@ -1,0 +1,46 @@
+# Build artifacts
+bin/
+build/
+dist/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+*.o
+*.a
+*.obj
+*.pch
+*.pdb
+
+# Go modules cache
+vendor/
+
+# IDE/editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+
+# Local configs and secrets
+config.yaml
+.env
+
+# Runtime / temp
+/tmp/
+/tmp_check/
+*.pid
+
+# Node / web (if added later)
+node_modules/
+docs/
+scripts/
+junocash-0.9.4/
+junocash/
+xmrig/

@@ -1,0 +1,17 @@
+stratum_listen: ":4444"
+tls_cert_path: "/home/mason/Desktop/prog/strategy-app/juno-pool/tmp/regtest/tls/stratum.crt"
+tls_key_path: "/home/mason/Desktop/prog/strategy-app/juno-pool/tmp/regtest/tls/stratum.key"
+node_rpc_url: "http://testuser:testpass@127.0.0.1:18232"
+metrics_listen: ":9100"
+nats_url: "nats://127.0.0.1:4222"
+postgres_dsn: "postgres://mason:zxc@127.0.0.1:5432/juno_pool?sslmode=disable"
+clickhouse_dsn: ""
+pool_fee_bps: 100
+donation_default: false
+vardiff_target_ms: 800
+vardiff_retarget_secs: 30
+default_difficulty: 1
+pps_reward_per_diff: 0.0
+block_confirmations: 10
+payout_threshold: 0.1
+payout_batch_cron: "@daily"
