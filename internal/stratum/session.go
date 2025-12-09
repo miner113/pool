@@ -71,9 +71,9 @@ func (s *Session) Hashrate() float64 {
 	if elapsed < 1 || s.shareCount == 0 {
 		return 0
 	}
-	// Hashrate = (shares * difficulty * 2^32) / time
-	// For simplicity with low difficulty: shares * diff / time gives approx H/s
-	return float64(s.shareCount) * s.difficulty * 4294967296.0 / elapsed
+	// Hashrate = (shares * difficulty) / time
+	// For RandomX: difficulty represents the expected number of hashes per share
+	return float64(s.shareCount) * s.difficulty / elapsed
 }
 
 // Username returns the authorized username for this session.
