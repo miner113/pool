@@ -177,7 +177,7 @@ func (s *Session) handleLogin(req Request) error {
 		return fmt.Errorf("bad login params: %v", err)
 	}
 
-	// Extract login (username)
+	// Extract login (username) - for xmrig this is typically the wallet address
 	if login, ok := params["login"].(string); ok && login != "" {
 		s.username = login
 	} else {
@@ -187,6 +187,11 @@ func (s *Session) handleLogin(req Request) error {
 	s.subscribed = true
 	s.authorized = true
 	s.isXmrig = true // Mark as xmrig client
+
+	// For xmrig, the login IS the payout address - store it
+	if s.store != nil && s.username != "anonymous" {
+		go s.store.SetPayoutAddress(context.Background(), s.username, s.username)
+	}
 
 	// Generate response with job
 	tmpl := s.getTemplate()
