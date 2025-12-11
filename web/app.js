@@ -68,7 +68,8 @@ async function loadPoolStats() {
         document.getElementById('pool-hashrate').textContent = formatHashrate(data.total_hashrate);
         document.getElementById('miners-online').textContent = data.connected_miners || 0;
         document.getElementById('blocks-found').textContent = data.blocks_found || 0;
-        document.getElementById('pool-fee').textContent = (data.pool_fee_percent || 1) + '%';
+        const fee = data.pool_fee_percent !== undefined ? data.pool_fee_percent : 1;
+        document.getElementById('pool-fee').textContent = fee + '%';
     }
 }
 
