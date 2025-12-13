@@ -1,0 +1,100 @@
+version: "3.9"
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: juno-pool-postgres
+    environment:
+      POSTGRES_USER: pool
+      POSTGRES_PASSWORD: poolpass
+      POSTGRES_DB: juno_pool
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pool -d juno_pool"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # NATS message broker (optional, for distributed setup)
+  nats:
+    image: nats:2.10-alpine
+    container_name: juno-pool-nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"  # Monitoring
+    command: ["--http_port", "8222"]
+    restart: unless-stopped
+
+  # Juno Pool Stratum Server
+  stratumd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: juno-pool-stratumd
+    depends_on:
+      postgres:
+        condition: service_healthy
+      nats:
+        condition: service_started
+    environment:
+      # These can override config.yaml values
+      STRATUM_LISTEN: ":4444"
+      POSTGRES_DSN: "postgres://pool:poolpass@postgres:5432/juno_pool?sslmode=disable"
+      NATS_URL: "nats://nats:4222"
+      METRICS_LISTEN: ":9100"
+    volumes:
+      - ./config.yaml:/app/config.yaml:ro
+    ports:
+      - "4444:4444"   # Stratum
+      - "9100:9100"   # Metrics
+    restart: unless-stopped
+
+  # Prometheus for metrics (optional)
+  prometheus:
+    image: prom/prometheus:v2.48.0
+    container_name: juno-pool-prometheus
+    volumes:
+      - ./docker/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=30d'
+    ports:
+      - "9090:9090"
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+  # Grafana for dashboards (optional)
+  grafana:
+    image: grafana/grafana:10.2.2
+    container_name: juno-pool-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  default:
+    name: juno-pool-network

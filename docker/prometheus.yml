@@ -1,0 +1,9 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'juno-pool'
+    static_configs:
+      - targets: ['stratumd:9100']
+    metrics_path: /metrics

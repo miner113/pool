@@ -1,0 +1,49 @@
+# Docker configuration for Juno Pool
+stratum_listen: ":4444"
+# TLS is optional - uncomment for production
+# tls_cert_path: "/etc/ssl/certs/pool.crt"
+# tls_key_path: "/etc/ssl/private/pool.key"
+
+# JunoCash node RPC - update with your node's credentials
+# For Docker: use host.docker.internal or the container network IP
+node_rpc_url: "http://user:password@host.docker.internal:18232"
+
+# Metrics endpoint for Prometheus
+metrics_listen: ":9100"
+
+# NATS for distributed job broadcasting (Docker internal network)
+nats_url: "nats://nats:4222"
+
+# PostgreSQL connection (Docker internal network)
+postgres_dsn: "postgres://pool:poolpass@postgres:5432/juno_pool?sslmode=disable"
+
+# ClickHouse for analytics (optional)
+clickhouse_dsn: ""
+
+# Pool fee in basis points (100 = 1%)
+pool_fee_bps: 100
+pool_fee_address: "j1your_pool_fee_address_here"
+
+# Donation enabled by default (miners can opt out)
+donation_default: false
+
+# Variable difficulty settings
+vardiff_target_ms: 800
+vardiff_retarget_secs: 30
+default_difficulty: 10000
+
+# PPS mode: reward per difficulty unit (0 = PPLNS mode)
+pps_reward_per_diff: 0.0
+
+# Block confirmation threshold
+block_confirmations: 100
+
+# Payout settings
+payout_threshold: 0.01
+payout_batch_cron: "0 */6 * * *"  # Every 6 hours
+
+# Shielded address for collecting mining rewards before payout
+payout_from_address: "j1your_pool_shielded_address_here"
+
+# Transparent address for coinbase (auto-shielded to payout_from_address)
+mining_address: "t1your_pool_transparent_address"

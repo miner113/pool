@@ -40,7 +40,7 @@ config.yaml
 # Node / web (if added later)
 node_modules/
 docs/
-scripts/
+scripts/*.sh
 junocash-0.9.4/
 junocash/
 xmrig/

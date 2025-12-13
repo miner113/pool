@@ -691,18 +691,34 @@ func (s *Session) sendNotifyWithTemplate(tmpl *job.Template) error {
 	return s.write(resp)
 }
 
-// sendXmrigJob sends a job notification in Monero/xmrig stratum format
+// sendXmrigJob sends a job notification in juno-xmrig format
+// For rx/juno, juno-xmrig expects Zcash-style mining.notify with params array:
+// [job_id, version, prevhash, merkleroot, blockcommitments, time, bits, clean_jobs, seed_hash]
 func (s *Session) sendXmrigJob(tmpl *job.Template) error {
-	jobObj, err := s.buildXmrigJob(tmpl)
-	if err != nil {
+	// Send difficulty before job notification
+	// juno-xmrig needs this to set the target for share validation
+	if err := s.sendSetDifficulty(s.difficulty); err != nil {
 		return err
 	}
-	// xmrig expects: {"jsonrpc":"2.0", "method":"job", "params": {...}}
-	// We need to write this directly since Response.Params is []any but we need a map
+
+	// Send Zcash-style mining.notify for rx/juno
+	// juno-xmrig parses this in Client.cpp parseNotification() for mining.notify + RX_JUNO
+	params := []any{
+		tmpl.JobID,                        // [0] job_id
+		fmt.Sprintf("%08x", tmpl.Version), // [1] version (8 hex = 4 bytes)
+		tmpl.PrevHash,                     // [2] prevhash (64 hex = 32 bytes)
+		tmpl.MerkleRoot,                   // [3] merkleroot (64 hex = 32 bytes)
+		tmpl.BlockCommit,                  // [4] blockcommitments (64 hex = 32 bytes)
+		fmt.Sprintf("%08x", tmpl.CurTime), // [5] time (8 hex = 4 bytes)
+		tmpl.Bits,                         // [6] bits (8 hex = 4 bytes)
+		true,                              // [7] clean_jobs
+		tmpl.RandomXSeed,                  // [8] seed_hash for RandomX
+	}
+
 	msg := map[string]any{
-		"jsonrpc": "2.0",
-		"method":  "job",
-		"params":  jobObj,
+		"id":     nil,
+		"method": "mining.notify",
+		"params": params,
 	}
 	b, err := json.Marshal(msg)
 	if err != nil {
