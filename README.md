@@ -64,7 +64,7 @@ See [config.example.yaml](config.example.yaml) for all options.
 
 ### Using XMRig
 
-Download the patched XMRig from [xmrig-junocash releases](https://github.com/Juno-cash-pool/juno-rig/releases).
+Download the patched XMRig from [juno-xmrig releases](https://github.com/juno-cash/juno-xmrig/releases).
 
 **Command line:**
 ```bash
@@ -173,5 +173,5 @@ MIT License - see [LICENSE](LICENSE) for details.
 - 🌐 **Pool:** [junocashpool.com](https://junocashpool.com)
 - 💻 **Juno Cash:** [juno.cash](https://juno.cash)
 - 📦 **Juno Node:** [github.com/juno-cash/junocash](https://github.com/juno-cash/junocash)
-- ⛏️ **XMRig Miner:** [github.com/Juno-cash-pool/juno-rig](https://github.com/Juno-cash-pool/juno-rig)
+- ⛏️ **XMRig Miner:** [github.com/juno-cash/juno-xmrig](https://github.com/juno-cash/juno-xmrig)
 
