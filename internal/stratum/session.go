@@ -664,6 +664,10 @@ func (s *Session) submitBlock(tmpl *job.Template, merkleRoot string, coinbaseHex
     }
     
     s.metrics.BlockSubmitted(true)
+	// Only record blocks that were successfully submitted
+	if s.store != nil && blockHash != "" {
+		go s.store.RecordBlock(context.Background(), tmpl.JobID, tmpl.Height, blockHash, "submitted")
+	}
     log.Printf("блок успешно отправлен высота=%d job=%s", tmpl.Height, tmpl.JobID)
 }
 
