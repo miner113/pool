@@ -581,41 +581,90 @@ func (s *Session) handleSubmit(req Request) error {
 }
 
 func (s *Session) submitBlock(tmpl *job.Template, merkleRoot string, coinbaseHex string, ntime uint32, nonceHex string, solution []byte) {
-	if s.submitter == nil {
-		log.Printf("block found but submitter unavailable")
-		return
-	}
-	s.metrics.BlockFound(tmpl.Height, tmpl.JobID)
+    if s.submitter == nil {
+        log.Printf("block found but submitter unavailable")
+        return
+    }
+    s.metrics.BlockFound(tmpl.Height, tmpl.JobID)
 
-	// Build the block hash for recording
-	var blockHash string
-	if header, err := job.BuildHeaderJuno(tmpl.Version, tmpl.PrevHash, merkleRoot, tmpl.BlockCommit, ntime, tmpl.Bits, nonceHex, solution); err == nil {
-		hash := job.HashHeader(header)
-		blockHash = job.ReverseHex(hash)
-	}
-
-	blockHex, err := job.BuildBlockJuno(tmpl.Version, tmpl.PrevHash, merkleRoot, tmpl.BlockCommit, ntime, tmpl.Bits, nonceHex, solution, coinbaseHex, tmpl.Transactions)
-	if err != nil {
-		log.Printf("block build failed: %v", err)
-		s.metrics.BlockSubmitted(false)
-		return
-	}
-	log.Printf("DEBUG block submission: height=%d nonce=%s solution=%x", tmpl.Height, nonceHex, solution)
-	log.Printf("DEBUG block hex (first 500 chars): %s", blockHex[:min(500, len(blockHex))])
-	log.Printf("DEBUG block hex length: %d", len(blockHex))
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	if err := s.submitter.SubmitBlock(ctx, blockHex); err != nil {
-		log.Printf("block submit failed: %v", err)
-		s.metrics.BlockSubmitted(false)
-		return
-	}
-	s.metrics.BlockSubmitted(true)
-	// Only record blocks that were successfully submitted
-	if s.store != nil && blockHash != "" {
-		go s.store.RecordBlock(context.Background(), tmpl.JobID, tmpl.Height, blockHash, "submitted")
-	}
-	log.Printf("block submitted height=%d job=%s", tmpl.Height, tmpl.JobID)
+    // 1. Проверить все параметры
+    log.Printf("DEBUG submitBlock: высота=%d, merkleRoot=%s, длина coinbase=%d, nonce=%s, решение=%x",
+        tmpl.Height, merkleRoot, len(coinbaseHex), nonceHex, solution)
+    
+    // 2. Проверить длину nonce
+    if len(nonceHex) != 64 {
+        log.Printf("ERROR: неправильная длина nonce: %d (ожидается 64)", len(nonceHex))
+        s.metrics.BlockSubmitted(false)
+        return
+    }
+    
+    // 3. Проверить длину решения
+    if len(solution) != 32 {
+        log.Printf("ERROR: неправильная длина решения: %d (ожидается 32)", len(solution))
+        s.metrics.BlockSubmitted(false)
+        return
+    }
+    
+    // 4. Проверить соответствие хэша
+    header, err := job.BuildHeaderJuno(tmpl.Version, tmpl.PrevHash, merkleRoot, tmpl.BlockCommit, ntime, tmpl.Bits, nonceHex, solution)
+    if err != nil {
+        log.Printf("ERROR: сборка заголовка: %v", err)
+        s.metrics.BlockSubmitted(false)
+        return
+    }
+    
+    hash := job.HashHeader(header)
+    hashStr := hex.EncodeToString(hash)
+    log.Printf("DEBUG: вычисленный хэш блока: %s", hashStr)
+    
+    // 5. Собрать блок
+    blockHex, err := job.BuildBlockJuno(tmpl.Version, tmpl.PrevHash, merkleRoot, tmpl.BlockCommit, ntime, tmpl.Bits, nonceHex, solution, coinbaseHex, tmpl.Transactions)
+    if err != nil {
+        log.Printf("block build failed: %v", err)
+        s.metrics.BlockSubmitted(false)
+        return
+    }
+    
+    // 6. Записать больше отладочной информации
+    log.Printf("DEBUG блок submission:")
+    log.Printf("  высота: %d", tmpl.Height)
+    log.Printf("  prevhash: %s", tmpl.PrevHash)
+    log.Printf("  merkleRoot: %s", merkleRoot)
+    log.Printf("  время: %d (hex: %08x)", ntime, ntime)
+    log.Printf("  bits: %s", tmpl.Bits)
+    log.Printf("  nonce: %s", nonceHex)
+    log.Printf("  длина решения: %d байт", len(solution))
+    log.Printf("  длина coinbase: %d символов", len(coinbaseHex))
+    log.Printf("  длина блока в hex: %d байт", len(blockHex)/2)
+    
+    // 7. Проверить, что ntime в допустимом диапазоне
+    currentTime := uint32(time.Now().Unix())
+    if ntime < currentTime-7200 || ntime > currentTime+900 {
+        log.Printf("WARNING: ntime %d вне диапазона (текущее время: %d)", ntime, currentTime)
+    }
+    
+    // 8. Отправить блок
+    ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+    defer cancel()
+    
+    if err := s.submitter.SubmitBlock(ctx, blockHex); err != nil {
+        log.Printf("block submit failed: %v", err)
+        s.metrics.BlockSubmitted(false)
+        
+        // Проверить специфичные ошибки
+        if strings.Contains(err.Error(), "CheckBlock") {
+            log.Printf("ERROR: блок не прошел проверку CheckBlock")
+            log.Printf("Проверьте:")
+            log.Printf("  - Правильность merkle root")
+            log.Printf("  - Правильность coinbase транзакции")
+            log.Printf("  - Соответствие solution RandomX хэшу")
+            log.Printf("  - Соответствие ntime сетевому времени")
+        }
+        return
+    }
+    
+    s.metrics.BlockSubmitted(true)
+    log.Printf("блок успешно отправлен высота=%d job=%s", tmpl.Height, tmpl.JobID)
 }
 
 func (s *Session) adjustDifficulty() {
