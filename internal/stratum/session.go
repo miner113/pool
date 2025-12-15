@@ -269,7 +269,7 @@ func (s *Session) buildXmrigJob(tmpl *job.Template) (map[string]any, error) {
 		"job_id":    tmpl.JobID,
 		"blob":      blob,
 		"target":    target,
-		"algo":      "rx/juno",
+		"algo":      "rx/dragonx",
 		"height":    tmpl.Height,
 		"seed_hash": tmpl.RandomXSeed,
 	}
