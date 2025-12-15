@@ -57,8 +57,6 @@ type templateResult struct {
 
 type defaultRoots struct {
 	MerkleRoot           string `json:"merkleroot"`
-	ChainHistoryRoot     string `json:"chainhistoryroot"`
-	AuthDataRoot         string `json:"authdataroot"`
 	BlockCommitmentsHash string `json:"blockcommitmentshash"`
 }
 
